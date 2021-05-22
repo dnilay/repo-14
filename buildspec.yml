@@ -18,7 +18,7 @@ phases:
       - echo Building docker image...
       - docker build -t book-registry/book-service .
 
-      - docker tag book-registry/book-service 234825976347.dkr.ecr.ap-southeast-1.amazonaws.com/book-registry:book-service
+      - docker tag book-registry/book-service public.ecr.aws/h4h0t5v0/my-repo/book-registry:book-service
 
   post_build:
 
@@ -28,11 +28,11 @@ phases:
 
       - echo Pushing the Docker image
 
-      - docker push 234825976347.dkr.ecr.ap-southeast-1.amazonaws.com/book-registry/book-registry:book-service
+      - docker push public.ecr.aws/h4h0t5v0/my-repo/book-registry:book-service
 
       - echo Writing definition files
 
-      - printf '[{"name":"audit-checklist-container", "imageUri":"%s"}]' 234825976347.dkr.ecr.ap-southeast-1.amazonaws.com/book-registry/book-registry:book-service > taskdefinition.json
+      - printf '[{"name":"audit-checklist-container", "imageUri":"%s"}]' public.ecr.aws/h4h0t5v0/my-repo/book-registry:book-service > taskdefinition.json
 
 artifacts:
 
