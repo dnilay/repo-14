@@ -1,39 +1,33 @@
 version: 0.2
 
-phases:
 
-  install:
-    runtime-versions:
-      docker: 18
+phases:
   pre_build:
     commands:
+      - mvn clean install
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin 234825976347.dkr.ecr.ap-southeast-1.amazonaws.com
+      - aws --version
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+      - REPOSITORY_URI=688977122149.dkr.ecr.ap-south-1.amazonaws.com/javatechie-registry
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
   build:
     commands:
-      - echo Build started on 'date'
-      - echo Buliding java
-      - mvn compile
-      - mvn clean package
-      - echo Building docker image...
-      - docker build -t book-registry/book-service .
-
-      - docker tag book-registry/book-service public.ecr.aws/h4h0t5v0/my-repo/book-registry:book-service
-
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
   post_build:
-
     commands:
-
-      - echo Build completed on 'date'
-
-      - echo Pushing the Docker image
-
-      - docker push public.ecr.aws/h4h0t5v0/my-repo/book-registry:book-service
-
-      - echo Writing definition files
-
-      - printf '[{"name":"audit-checklist-container", "imageUri":"%s"}]' public.ecr.aws/h4h0t5v0/my-repo/book-registry:book-service > taskdefinition.json
-
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - printf '[{"name":"order-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
 artifacts:
+  files:
+    - imagedefinitions.json
+    - target/book-service.jar
 
-  files: taskdefinition.json
